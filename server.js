@@ -300,6 +300,28 @@ app.post('/api/quejas/:id/comentarios', authMiddleware, adminMiddleware, async (
   }
 });
 
+// Eliminar queja (admin)
+app.delete('/api/quejas/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const queja = await Queja.findByIdAndDelete(req.params.id);
+    if (!queja) return res.status(404).json({ error: 'No encontrada' });
+    
+    // Eliminar fotos del servidor
+    if (queja.fotos && queja.fotos.length > 0) {
+      queja.fotos.forEach(foto => {
+        const filePath = path.join(__dirname, foto);
+        fs.unlink(filePath, (err) => {
+          if (err) console.error('Error al eliminar foto:', err);
+        });
+      });
+    }
+    
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar' });
+  }
+});
+
 // Comentarios públicos (cualquier usuario autenticado)
 app.post('/api/quejas/:id/comentarios-publicos', authMiddleware, async (req, res) => {
   try {

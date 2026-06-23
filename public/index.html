@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alerta Distrito - Reportes</title>
+  <title>ViasAte - Reportes</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -28,7 +28,7 @@
       </div>
       <div class="h-6 w-px bg-slate-500 mx-1"></div>
       <div>
-        <h1 class="text-sm font-light tracking-wide">Fiscalizador <span class="font-bold">Ciudadano</span></h1>
+        <h1 class="text-sm font-light tracking-wide">ViasAte</h1>
         <p class="text-[10px] text-slate-300">Zona ATE</p>
       </div>
     </div>
@@ -156,7 +156,9 @@
     const mundo = [[-90, -180],[90, -180],[90, 180],[-90, 180]];
     L.polygon([mundo, poligonoAte], { color: '#1e293b', fillColor: '#0f172a', fillOpacity: 0.65, stroke: false }).addTo(map);
     L.polygon(poligonoAte, { color: '#f43f5e', weight: 2, fill: false, dashArray: '6 10' }).addTo(map);
-    map.setMaxBounds(L.latLngBounds(poligonoAte).pad(0.5));
+    const bounds = L.latLngBounds(poligonoAte);
+    map.fitBounds(bounds, { padding: [50, 50] });
+    map.setMaxBounds(bounds.pad(0.1));
 
     function inside(lat, lng, poly) {
       let inside = false;

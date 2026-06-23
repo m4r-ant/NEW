@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Administración</title>
+  <title>ViasAte</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -11,7 +11,7 @@
 <body class="bg-slate-100 font-sans p-6">
   <div class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold text-slate-800">⚙️ Panel de Administración</h1>
+      <h1 class="text-3xl font-bold text-slate-800">⚙️ Admin ViasAte</h1>
       <button onclick="window.location='/login.html'" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">Cerrar sesión</button>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
@@ -30,9 +30,9 @@
       <input type="text" id="search" placeholder="Buscar título..." class="bg-white border rounded-lg px-4 py-2 text-sm flex-1">
       <button id="exportCsv" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Exportar CSV</button>
     </div>
-    <div class="bg-white rounded-xl shadow overflow-x-auto">
+    <div class="bg-white rounded-xl shadow overflow-x-auto max-h-96">
       <table class="w-full text-sm text-left">
-        <thead class="bg-slate-50 text-slate-600 uppercase">
+        <thead class="bg-slate-50 text-slate-600 uppercase sticky top-0">
           <tr><th class="px-4 py-3">Código</th><th class="px-4 py-3">Título</th><th class="px-4 py-3">Categoría</th><th class="px-4 py-3">Estado</th><th class="px-4 py-3">Fecha</th><th class="px-4 py-3">Acciones</th></tr>
         </thead>
         <tbody id="tablaBody"></tbody>
@@ -84,6 +84,7 @@
           <td class="px-4 py-3 flex gap-1">
             <button class="text-xs bg-slate-200 rounded px-2 py-1 verDetalle" data-id="${q._id}"><i data-lucide="eye" class="w-3 h-3 inline"></i> Ver</button>
             <button class="text-xs bg-yellow-100 rounded px-2 py-1 comentarioBtn" data-id="${q._id}">💬</button>
+            <button class="text-xs bg-red-100 text-red-700 rounded px-2 py-1 eliminarBtn" data-id="${q._id}"><i data-lucide="trash-2" class="w-3 h-3 inline"></i> Eliminar</button>
           </td>
         </tr>`).join('');
 
@@ -104,6 +105,20 @@
             body: JSON.stringify({ texto })
           });
           alert('Comentario agregado');
+        });
+      });
+
+      document.querySelectorAll('.eliminarBtn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (confirm('¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.')) {
+            await fetch(`/api/quejas/${id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            alert('Registro eliminado correctamente');
+            fetchData();
+          }
         });
       });
       lucide.createIcons();
