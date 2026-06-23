@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerta Distrito - Iniciar Sesión</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+
+  <!-- Fondos decorativos -->
+  <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-slate-300 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-slate-400 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+
+  <main class="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden relative z-10 border border-slate-200">
+    
+    <!-- Barra multicolor -->
+    <div class="w-full h-1.5 flex">
+      <div class="w-1/4 bg-teal-500"></div>
+      <div class="w-1/4 bg-lime-500"></div>
+      <div class="w-1/4 bg-amber-500"></div>
+      <div class="w-1/4 bg-rose-500"></div>
+    </div>
+
+    <!-- Cabecera Institucional -->
+    <div class="bg-[#424242] text-white px-6 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-white px-2 py-1 rounded flex items-center justify-center shadow-inner">
+          <span class="text-[10px] font-bold text-red-600 tracking-widest">PERÚ</span>
+        </div>
+        <div class="h-8 w-px bg-slate-500 mx-1"></div>
+        <div>
+          <h1 class="text-base font-light tracking-wide">Fiscalizador <span class="font-bold">Ciudadano</span></h1>
+          <p class="text-[11px] text-slate-300 flex items-center gap-1 mt-0.5">
+            <i data-lucide="map-pin" class="w-3 h-3"></i> Zona ATE
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="p-8">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-12 h-12 bg-slate-100 rounded-full mb-3 text-slate-700">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800">Iniciar Sesión</h2>
+        <p class="text-sm text-slate-500 mt-1">Ingresa tus credenciales para continuar</p>
+      </div>
+
+      <form id="formLogin" class="space-y-5">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1 uppercase tracking-wide">
+            Correo Electrónico
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="mail" class="w-5 h-5"></i>
+            </div>
+            <input type="email" id="email" placeholder="usuario@correo.com" class="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 text-slate-800 transition-colors" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1 uppercase tracking-wide">
+            Contraseña
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="lock" class="w-5 h-5"></i>
+            </div>
+            <input type="password" id="password" placeholder="••••••••" class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 text-slate-800 transition-colors" required>
+            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 transition-colors">
+              <i data-lucide="eye" class="w-5 h-5" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-2">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="remember" class="h-4 w-4 accent-slate-800 border-slate-300 rounded">
+            <label for="remember" class="text-xs text-slate-600 font-medium cursor-pointer">Recordarme</label>
+          </div>
+          <a href="#" class="text-xs font-semibold text-slate-700 hover:text-rose-600 transition-colors">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <button type="submit" class="w-full bg-[#1e293b] hover:bg-black text-white py-3.5 rounded-lg font-semibold flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-lg transition-all mt-6">
+          <span id="btnText">Ingresar al Sistema</span>
+          <i data-lucide="arrow-right" class="w-4 h-4" id="btnIcon"></i>
+          <span id="btnSpinner" class="hidden animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+        </button>
+      </form>
+
+      <div class="mt-8 text-center border-t border-slate-100 pt-6">
+        <p class="text-sm text-slate-600">
+          ¿No tienes una cuenta? 
+          <a href="/register.html" class="font-bold text-slate-800 hover:text-rose-600 transition-colors">Regístrate aquí</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    togglePassword.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      eyeIcon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+      lucide.createIcons({ nameAttr: 'data-lucide', attrs: { class: 'w-5 h-5' } });
+    });
+
+    // Login real con backend
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const btnText = document.getElementById('btnText');
+      const btnIcon = document.getElementById('btnIcon');
+      const spinner = document.getElementById('btnSpinner');
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      btnText.textContent = 'Verificando...';
+      btnIcon.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location = data.user.role === 'admin' ? '/admin.html' : '/index.html';
+        } else {
+          alert('Credenciales inválidas');
+        }
+      } catch (error) {
+        alert('Error de conexión');
+      } finally {
+        btnText.textContent = 'Ingresar al Sistema';
+        btnIcon.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

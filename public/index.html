@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerta Distrito - Reportes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .leaflet-container { font-family: system-ui, -apple-system, sans-serif; }
+    .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .leaflet-popup-content { margin: 0; }
+    .custom-marker { background: transparent; border: none; }
+    input[type="file"].sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    .preview-thumb { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; }
+    body { font-size: 16px; font-family: system-ui, -apple-system, sans-serif; }
+    .marker-icon { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .marker-icon i { transform: rotate(45deg); color: white; width: 16px; height: 16px; }
+  </style>
+</head>
+<body class="bg-slate-100 h-screen flex flex-col overflow-hidden">
+  
+  <header class="bg-[#424242] text-white h-14 flex items-center justify-between px-5 shadow-md z-40 relative border-b border-slate-600">
+    <div class="flex items-center gap-3">
+      <div class="bg-white px-2 py-1 rounded flex items-center justify-center">
+        <span class="text-[10px] font-bold text-red-600 tracking-widest">PERÚ</span>
+      </div>
+      <div class="h-6 w-px bg-slate-500 mx-1"></div>
+      <div>
+        <h1 class="text-sm font-light tracking-wide">Fiscalizador <span class="font-bold">Ciudadano</span></h1>
+        <p class="text-[10px] text-slate-300">Zona ATE</p>
+      </div>
+    </div>
+    <button id="logoutBtn" class="bg-[#5a5a5a] hover:bg-red-600 transition-colors text-white text-xs px-3 py-1.5 rounded border border-slate-500">
+      Cerrar sesión
+    </button>
+  </header>
+
+  <main class="flex flex-1 flex-col md:flex-row overflow-hidden relative">
+    
+    <section id="reportPanel" class="w-full md:w-[380px] bg-white shadow-2xl flex flex-col z-30 overflow-hidden hidden border-r border-slate-200">
+      
+      <div class="w-full h-1.5 flex flex-shrink-0">
+        <div class="w-1/4 bg-teal-500"></div>
+        <div class="w-1/4 bg-lime-500"></div>
+        <div class="w-1/4 bg-amber-500"></div>
+        <div class="w-1/4 bg-rose-500"></div>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 flex flex-col">
+        <h2 class="text-xl font-bold text-slate-800 mb-5">Registrar Incidencia</h2>
+        
+        <form id="formQueja" class="flex flex-col gap-4">
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">
+              <span class="text-rose-500">*</span> Categoría
+            </label>
+            <select id="categoria" class="w-full px-3 py-2.5 bg-white border border-slate-400 rounded-lg text-sm focus:outline-none focus:border-slate-600 text-slate-800" required>
+              <option value="" disabled selected>Selecciona una categoría...</option>
+              <option value="Bache/Pista Rota">🕳️ Bache</option>
+              <option value="Basura Acumulada">🗑️ Basura</option>
+              <option value="Falla Eléctrica">💡 Eléctrica</option>
+              <option value="Fuga de Agua">💧 Agua</option>
+              <option value="Otro">⚠️ Otro</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">
+              <span class="text-rose-500">*</span> Título
+            </label>
+            <input type="text" id="titulo" placeholder="Ej. Bache peligroso en avenida" class="w-full px-3 py-2.5 bg-white border border-slate-400 rounded-lg text-sm focus:outline-none focus:border-slate-600 text-slate-800" required>
+          </div>
+          
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">
+              <span class="text-rose-500">*</span> Descripción
+            </label>
+            <textarea id="descripcion" rows="3" placeholder="Detalla la situación..." class="w-full px-3 py-2.5 bg-white border border-slate-400 rounded-lg text-sm focus:outline-none focus:border-slate-600 text-slate-800 resize-none" required></textarea>
+          </div>
+          
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">
+              Fotos (opcional, máx 3)
+            </label>
+            <div id="dropZone" class="border border-dashed border-slate-400 bg-slate-50 rounded-lg p-4 text-center hover:border-slate-700 hover:bg-slate-100 cursor-pointer transition-colors">
+              <input type="file" id="fotoInput" accept="image/*" multiple class="sr-only">
+              <div id="dropContent">
+                <span class="text-2xl block mb-1 text-slate-400">📸</span>
+                <p class="text-xs text-slate-600">Arrastra o haz clic para subir</p>
+              </div>
+              <div id="previewContainer" class="flex flex-wrap gap-2 mt-2 hidden justify-center"></div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2 pt-1">
+            <input type="checkbox" id="anonimo" class="h-4 w-4 accent-slate-800">
+            <label for="anonimo" class="text-xs text-slate-600 font-medium">Reportar anónimamente</label>
+          </div>
+          
+          <div class="bg-slate-50 border border-slate-300 rounded-lg p-3 flex justify-between items-center text-xs font-mono text-slate-600">
+            <span>📍 Lat: <span id="txtLat">-12.025</span> | Lng: <span id="txtLng">-76.880</span></span>
+            <button type="button" id="resetLocation" class="text-slate-400 hover:text-slate-800 text-lg transition-colors" title="Restaurar ubicación">🔄</button>
+          </div>
+          <input type="hidden" id="latitud" value="-12.025">
+          <input type="hidden" id="longitud" value="-76.880">
+          
+          <div id="mensajeFeedback" class="text-xs font-medium rounded-xl p-3 hidden"></div>
+          
+          <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 text-sm shadow-sm transition-colors mt-2">
+            <span id="btnText">✓ Registrar Incidencia</span>
+            <span id="btnSpinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+          </button>
+        </form>
+
+        <div id="codigoResultado" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center mt-4">
+          <span class="text-xs text-emerald-600 font-bold uppercase block mb-1">Código Generado Exitosamente</span>
+          <strong id="codigoFinal" class="text-emerald-800 text-xl font-mono tracking-widest"></strong>
+        </div>
+      </div>
+    </section>
+
+    <section id="map" class="flex-1 min-h-[40vh] relative z-10">
+      <div id="loadingOverlay" class="absolute inset-0 z-[999] bg-white/80 flex items-center justify-center hidden">
+        <div class="flex gap-3 items-center"><div class="animate-spin h-6 w-6 border-2 border-slate-800 border-t-transparent rounded-full"></div> Cargando...</div>
+      </div>
+      <div class="absolute bottom-6 left-4 z-[400] bg-white/90 backdrop-blur px-3 py-2 border border-slate-200 rounded-lg shadow-sm text-xs flex flex-wrap gap-3 font-medium text-slate-700">
+        <span>🟠 Bache</span><span>🟢 Basura</span><span>🟡 Eléctrica</span><span>🔵 Agua</span><span>⚪ Otro</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    lucide.createIcons();
+
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!token) window.location = '/login.html';
+
+    if (user.role === 'vecino' || user.role === 'admin') {
+      document.getElementById('reportPanel').classList.remove('hidden');
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.clear();
+      window.location = '/login.html';
+    });
+
+    const map = L.map('map', { zoomControl: false }).setView([-12.025, -76.880], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
+
+    const poligonoAte = [[-11.992589, -76.782859],[-12.015341, -76.783159],[-12.038093, -76.783460],[-12.062546, -76.783760],[-12.084879, -76.877500],[-12.084879, -76.950000],[-12.076500, -76.955000],[-12.063479, -76.960704],[-12.053301, -76.965928],[-12.045000, -76.972119],[-12.036699, -76.978310],[-12.028398, -76.984501],[-12.020097, -76.990692],[-12.011796, -76.996883],[-12.010000, -76.998096],[-11.992589, -76.998096]];
+    const mundo = [[-90, -180],[90, -180],[90, 180],[-90, 180]];
+    L.polygon([mundo, poligonoAte], { color: '#1e293b', fillColor: '#0f172a', fillOpacity: 0.65, stroke: false }).addTo(map);
+    L.polygon(poligonoAte, { color: '#f43f5e', weight: 2, fill: false, dashArray: '6 10' }).addTo(map);
+    map.setMaxBounds(L.latLngBounds(poligonoAte).pad(0.5));
+
+    function inside(lat, lng, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+        if ((yi > lng) !== (yj > lng) && lat < (xj - xi) * (lng - yi) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    }
+
+    let tempMarker = null;
+    map.on('click', e => {
+      if (!inside(e.latlng.lat, e.latlng.lng, poligonoAte)) return alert('❌ Fuera de Ate');
+      document.getElementById('latitud').value = e.latlng.lat;
+      document.getElementById('longitud').value = e.latlng.lng;
+      document.getElementById('txtLat').textContent = e.latlng.lat.toFixed(5);
+      document.getElementById('txtLng').textContent = e.latlng.lng.toFixed(5);
+      if (tempMarker) tempMarker.setLatLng(e.latlng);
+      else tempMarker = L.marker(e.latlng, { icon: L.divIcon({ className: 'custom-marker', html: '<div style="background:#1e293b; width:28px; height:28px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);"></div>', iconSize:[28,28], iconAnchor:[14,28] }) }).addTo(map);
+    });
+
+    document.getElementById('resetLocation').addEventListener('click', () => {
+      document.getElementById('latitud').value = '-12.025';
+      document.getElementById('longitud').value = '-76.880';
+      document.getElementById('txtLat').textContent = '-12.025';
+      document.getElementById('txtLng').textContent = '-76.880';
+      if (tempMarker) { tempMarker.setLatLng([-12.025, -76.880]); map.setView([-12.025, -76.880], 13); }
+    });
+
+    let selectedFiles = [];
+    const fotoInput = document.getElementById('fotoInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const dropZone = document.getElementById('dropZone');
+    const dropContent = document.getElementById('dropContent');
+
+    function updatePreviews() {
+      previewContainer.innerHTML = '';
+      selectedFiles.forEach((file, i) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const div = document.createElement('div'); div.className = 'relative';
+          div.innerHTML = `<img src="${e.target.result}" class="preview-thumb"><button class="absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full h-5 w-5 flex items-center justify-center shadow text-[10px] text-slate-600 hover:text-red-600 font-bold" data-idx="${i}">✕</button>`;
+          previewContainer.appendChild(div);
+          div.querySelector('button').addEventListener('click', (ev) => { ev.stopPropagation(); removeFile(i); });
+        };
+        reader.readAsDataURL(file);
+      });
+      previewContainer.classList.toggle('hidden', selectedFiles.length === 0);
+      dropContent.classList.toggle('hidden', selectedFiles.length > 0);
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updatePreviews();
+      const dt = new DataTransfer();
+      selectedFiles.forEach(f => dt.items.add(f));
+      fotoInput.files = dt.files;
+    }
+
+    dropZone.addEventListener('click', () => fotoInput.click());
+    dropZone.addEventListener('dragover', e => e.preventDefault());
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer.files).slice(0, 3 - selectedFiles.length);
+      if (files.length === 0) return;
+      selectedFiles = [...selectedFiles, ...files].slice(0, 3);
+      updatePreviews();
+      const dt = new DataTransfer();
+      selectedFiles.forEach(f => dt.items.add(f));
+      fotoInput.files = dt.files;
+    });
+    fotoInput.addEventListener('change', () => {
+      const files = Array.from(fotoInput.files);
+      selectedFiles = files.slice(0, 3);
+      updatePreviews();
+    });
+
+    document.getElementById('formQueja').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById('latitud').value);
+      const lng = parseFloat(document.getElementById('longitud').value);
+      if (!inside(lat, lng, poligonoAte)) return alert('Ubicación fuera de Ate');
+
+      const btn = document.getElementById('btnText'), spinner = document.getElementById('btnSpinner');
+      btn.classList.add('hidden'); spinner.classList.remove('hidden');
+      const formData = new FormData();
+      formData.append('categoria', document.getElementById('categoria').value);
+      formData.append('titulo', document.getElementById('titulo').value);
+      formData.append('descripcion', document.getElementById('descripcion').value);
+      formData.append('latitud', lat);
+      formData.append('longitud', lng);
+      formData.append('anonimo', document.getElementById('anonimo').checked);
+      selectedFiles.forEach(f => formData.append('fotos', f));
+
+      try {
+        const res = await fetch('/api/quejas', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        if (res.status === 409) alert('Ya existe un reporte similar reciente');
+        else if (res.ok) {
+          const data = await res.json();
+          document.getElementById('codigoFinal').textContent = data.codigo;
+          document.getElementById('codigoResultado').classList.remove('hidden');
+          document.getElementById('formQueja').reset();
+          selectedFiles = []; updatePreviews();
+          loadMarkers();
+        } else {
+          alert('Error al guardar');
+        }
+      } catch { alert('Error de conexión'); }
+      finally { btn.classList.remove('hidden'); spinner.classList.add('hidden'); }
+    });
+
+    const categoryIcons = {
+      'Bache/Pista Rota': 'alert-triangle',
+      'Basura Acumulada': 'trash-2',
+      'Falla Eléctrica': 'zap',
+      'Fuga de Agua': 'droplets',
+      'Otro': 'info'
+    };
+    const categoryColors = {
+      'Bache/Pista Rota': '#f97316',
+      'Basura Acumulada': '#22c55e',
+      'Falla Eléctrica': '#eab308',
+      'Fuga de Agua': '#3b82f6',
+      'Otro': '#64748b'
+    };
+
+    function createMarkerIcon(categoria) {
+      const color = categoryColors[categoria] || '#64748b';
+      const iconName = categoryIcons[categoria] || 'info';
+      return L.divIcon({
+        className: 'custom-marker',
+        html: `<div class="marker-icon" style="background:${color};"><i data-lucide="${iconName}" class="w-4 h-4"></i></div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 36],
+        popupAnchor: [0, -36]
+      });
+    }
+
+    async function cambiarEstadoDesdeMapa(id, nuevoEstado) {
+      try {
+        await fetch(`/api/quejas/${id}/estado`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ nuevoEstado })
+        });
+        loadMarkers();
+      } catch (err) {
+        alert('Error al cambiar estado');
+      }
+    }
+
+    function construirPopup(queja) {
+      const estadoClass = queja.estado === 'Terminado' ? 'bg-green-100 text-green-700 border-green-200' :
+                          queja.estado === 'En proceso' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                          'bg-amber-100 text-amber-700 border-amber-200';
+
+      const fotosHtml = queja.fotos && queja.fotos.length > 0 
+        ? `<div class="flex gap-1 mt-2">${queja.fotos.map(f => `<img src="${f}" class="h-16 w-16 object-cover rounded border">`).join('')}</div>` 
+        : '';
+
+      // Comentarios públicos (últimos 3)
+      const comentariosHtml = queja.comentarios_publicos && queja.comentarios_publicos.length > 0 
+        ? `<div class="mt-2 pt-2 border-t border-slate-100">
+            <p class="text-[10px] font-semibold text-slate-500 mb-1">🗣️ Vecinos comentan:</p>
+            <div class="max-h-20 overflow-y-auto space-y-1">
+              ${queja.comentarios_publicos.slice(-3).map(c => `
+                <div class="text-[10px] text-slate-600">
+                  <span class="font-medium">${c.autor}</span>: ${c.texto}
+                </div>`).join('')}
+            </div>
+          </div>` 
+        : '';
+
+      // Formulario para agregar comentario público
+      const formComentario = `
+        <div class="mt-3 pt-2 border-t border-slate-100">
+          <textarea id="publicComment-${queja._id}" rows="1" placeholder="Añade un comentario público..." class="w-full text-xs border border-slate-200 rounded p-1 resize-none"></textarea>
+          <button class="w-full bg-slate-100 text-slate-700 text-xs py-1 mt-1 rounded hover:bg-slate-200 add-public-comment" data-id="${queja._id}">Enviar</button>
+        </div>
+      `;
+
+      // Controles de admin
+      const adminControls = user.role === 'admin' ? `
+        <div class="flex gap-1 mt-3 pt-2 border-t border-slate-100">
+          ${queja.estado !== 'En proceso' ? `<button class="estado-btn flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs py-1 px-2 rounded" data-id="${queja._id}" data-estado="En proceso">⚙️ Proceso</button>` : ''}
+          ${queja.estado !== 'Terminado' ? `<button class="estado-btn flex-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs py-1 px-2 rounded" data-id="${queja._id}" data-estado="Terminado">✅ Terminado</button>` : ''}
+        </div>` : '';
+
+      return `
+        <div class="w-72 p-3 font-sans">
+          <div class="flex items-start justify-between mb-2">
+            <h3 class="text-sm font-bold text-slate-800 truncate pr-2">${queja.titulo}</h3>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full font-semibold border ${estadoClass} whitespace-nowrap">${queja.estado}</span>
+          </div>
+          <div class="text-xs text-slate-500 flex items-center gap-1 mb-1">
+            <i data-lucide="calendar" class="w-3 h-3"></i> ${new Date(queja.fecha).toLocaleDateString()}
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">${queja.descripcion}</p>
+          ${fotosHtml}
+          ${comentariosHtml}
+          ${formComentario}
+          ${adminControls}
+        </div>
+      `;
+    }
+
+    // Delegación de eventos para comentarios públicos y cambio de estado
+    document.addEventListener('click', async function(e) {
+      // Comentario público
+      if (e.target.classList.contains('add-public-comment')) {
+        const id = e.target.dataset.id;
+        const textarea = document.getElementById(`publicComment-${id}`);
+        if (!textarea) return;
+        const texto = textarea.value.trim();
+        if (!texto) return;
+        
+        e.target.disabled = true;
+        e.target.textContent = 'Enviando...';
+        try {
+          const res = await fetch(`/api/quejas/${id}/comentarios-publicos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ texto })
+          });
+          if (res.ok) {
+            loadMarkers(); // recargar marcadores para ver el nuevo comentario
+          } else {
+            alert('Error al enviar comentario');
+          }
+        } catch {
+          alert('Error de conexión');
+        } finally {
+          e.target.disabled = false;
+          e.target.textContent = 'Enviar';
+        }
+      }
+
+      // Cambio de estado (admin)
+      if (e.target.classList.contains('estado-btn')) {
+        const id = e.target.dataset.id;
+        const estado = e.target.dataset.estado;
+        await cambiarEstadoDesdeMapa(id, estado);
+      }
+    });
+
+    function renderMarkers(quejas) {
+      map.eachLayer(l => { if (l instanceof L.Marker && l !== tempMarker) map.removeLayer(l); });
+      quejas.forEach(q => {
+        const marker = L.marker([q.latitud, q.longitud], { icon: createMarkerIcon(q.categoria) }).addTo(map);
+        const popupContent = construirPopup(q);
+        marker.bindPopup(popupContent, { maxWidth: 300, className: 'popup-estado' });
+      });
+      lucide.createIcons(); // refrescar íconos dentro de popups
+    }
+
+    async function loadMarkers() {
+      const cacheKey = 'quejasCache';
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || '{}');
+      try {
+        const etagRes = await fetch('/api/quejas/etag');
+        const etagData = await etagRes.json();
+        if (cached.lastModified === etagData.lastModified) {
+          renderMarkers(cached.data);
+          return;
+        }
+        const res = await fetch('/api/quejas');
+        const quejas = await res.json();
+        localStorage.setItem(cacheKey, JSON.stringify({ data: quejas, lastModified: etagData.lastModified }));
+        renderMarkers(quejas);
+      } catch (err) { /* usar cache offline */ }
+    }
+
+    loadMarkers();
+  </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro - Alerta Distrito</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between">
+
+  <header class="w-full flex justify-center py-5 bg-white shadow-sm border-b border-slate-200">
+    <img src="https://visor-bgr.sunarp.gob.pe/visor-bgr/assets/img/sunarp-black.svg" alt="SUNARP" class="h-14">
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-10 flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-14">
+    
+    <div class="w-full max-w-xs flex justify-center lg:justify-end">
+      <img src="https://visor-bgr.sunarp.gob.pe/visor-bgr/assets/img/logos/new_logo_bgr_main.png" alt="Base Gráfica Registral" class="max-w-full h-auto">
+    </div>
+
+    <div class="w-full max-w-md bg-transparent">
+      <div class="w-full h-1.5 flex rounded-full overflow-hidden mb-6">
+        <div class="w-1/4 bg-teal-500"></div>
+        <div class="w-1/4 bg-lime-500"></div>
+        <div class="w-1/4 bg-amber-500"></div>
+        <div class="w-1/4 bg-rose-500"></div>
+      </div>
+
+      <h2 class="text-2xl font-bold text-slate-800 mb-6">Validar datos</h2>
+
+      <form id="registerForm" class="space-y-4">
+        <div>
+          <label for="dni" class="text-xs font-bold text-slate-700 block mb-1">
+            <span class="text-rose-500">*</span> Número de DNI
+          </label>
+          <input type="text" id="dni" maxlength="8" placeholder="DNI" class="w-full px-4 py-2.5 bg-white border border-slate-400 rounded-lg text-base focus:outline-none focus:border-slate-600 text-slate-800" required>
+        </div>
+
+        <div>
+          <label for="nombre" class="text-xs font-bold text-slate-700 block mb-1">
+            Nombre completo
+          </label>
+          <input type="text" id="nombre" placeholder="Tu nombre completo" class="w-full px-4 py-2.5 bg-white border border-slate-400 rounded-lg text-base focus:outline-none focus:border-slate-600 text-slate-800">
+        </div>
+
+        <div>
+          <label for="email" class="text-xs font-bold text-slate-700 block mb-1">
+            <span class="text-rose-500">*</span> Correo electrónico
+          </label>
+          <input type="email" id="email" placeholder="Correo electrónico" class="w-full px-4 py-2.5 bg-white border border-slate-400 rounded-lg text-base focus:outline-none focus:border-slate-600 text-slate-800" required>
+        </div>
+
+        <div>
+          <label for="password" class="text-xs font-bold text-slate-700 block mb-1">
+            <span class="text-rose-500">*</span> Contraseña
+          </label>
+          <input type="password" id="password" placeholder="Contraseña" class="w-full px-4 py-2.5 bg-white border border-slate-400 rounded-lg text-base focus:outline-none focus:border-slate-600 text-slate-800" required>
+        </div>
+
+        <!-- Captcha real -->
+        <div class="flex gap-3 items-center pt-2">
+          <div class="bg-zinc-800 text-white font-mono tracking-widest text-lg font-bold px-4 py-2.5 rounded-lg select-none italic line-through decoration-slate-400 shadow-inner w-32 text-center" id="captchaBox">
+            XR5HSQ
+          </div>
+          <button type="button" id="refreshCaptcha" class="text-xl p-2 text-slate-500 hover:text-slate-800 transition-colors">
+            🔄
+          </button>
+          <input type="text" id="captchaInput" placeholder="# Código captcha" class="flex-1 px-4 py-2.5 bg-white border border-slate-400 rounded-lg text-base focus:outline-none focus:border-slate-600 text-slate-800" required>
+        </div>
+
+        <button type="submit" id="submitBtn" class="w-full bg-slate-100 text-slate-400 font-semibold py-3 border border-slate-300 rounded-lg transition-colors flex items-center justify-center gap-2 text-base shadow-sm pointer-events-none">
+          ✓ Validar
+        </button>
+      </form>
+
+      <p class="text-sm text-center mt-4 text-slate-500">¿Ya tienes cuenta? <a href="/login.html" class="text-rose-600 font-medium hover:underline">Inicia sesión</a></p>
+
+      <p class="text-[11px] text-slate-500 text-center mt-6 leading-relaxed">
+        Al continuar con el uso del servicio usted está aceptando que conoce y está de acuerdo con los 
+        <a href="#" class="text-lime-600 font-bold hover:underline">Términos y condiciones</a> 
+        del servicio gratuito <strong class="text-slate-700">Base Gráfica Registral</strong>
+      </p>
+    </div>
+
+    <div class="hidden md:flex flex-col gap-4 max-w-xs w-full justify-center">
+      <img src="https://visor-bgr.sunarp.gob.pe/visor-bgr/assets/img/login/nu-docu.png" alt="Ayuda DNI" class="max-w-full h-auto">
+    </div>
+
+  </main>
+
+  <footer class="w-full text-center py-4 text-xs text-slate-400 border-t bg-white">
+    &copy; 2026 SUNARP - Todos los derechos reservados.
+  </footer>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const captchaBox = document.getElementById('captchaBox');
+
+    // Función para generar captcha aleatorio
+    function generarCaptcha() {
+      const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let nuevo = '';
+      for (let i = 0; i < 6; i++) {
+        nuevo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+      }
+      return nuevo;
+    }
+
+    // Actualizar captcha en la caja
+    document.getElementById('refreshCaptcha').addEventListener('click', () => {
+      captchaBox.textContent = generarCaptcha();
+      // Disparar evento input para reevaluar el botón
+      document.getElementById('captchaInput').dispatchEvent(new Event('input'));
+    });
+
+    // Evaluar habilitación del botón en cada cambio
+    form.addEventListener('input', () => {
+      const dni = document.getElementById('dni').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const captchaIngresado = document.getElementById('captchaInput').value.trim();
+      const captchaReal = captchaBox.textContent.trim();
+
+      const habilitado = dni.length === 8 && email && password && captchaIngresado === captchaReal;
+
+      if (habilitado) {
+        submitBtn.classList.remove('bg-slate-100', 'text-slate-400', 'border-slate-300', 'pointer-events-none');
+        submitBtn.classList.add('bg-slate-800', 'text-white', 'hover:bg-slate-700', 'border-transparent');
+      } else {
+        submitBtn.classList.remove('bg-slate-800', 'text-white', 'hover:bg-slate-700', 'border-transparent');
+        submitBtn.classList.add('bg-slate-100', 'text-slate-400', 'border-slate-300', 'pointer-events-none');
+      }
+    });
+
+    // Envío del formulario
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      // Validar captcha nuevamente por seguridad
+      const captchaReal = captchaBox.textContent.trim();
+      const captchaIngresado = document.getElementById('captchaInput').value.trim();
+      if (captchaIngresado !== captchaReal) {
+        alert('El código captcha no coincide');
+        // Refrescar captcha después de error
+        captchaBox.textContent = generarCaptcha();
+        document.getElementById('captchaInput').value = '';
+        return;
+      }
+
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dni: document.getElementById('dni').value,
+          nombre: document.getElementById('nombre').value,
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value
+        })
+      });
+
+      if (res.ok) {
+        alert('Registro exitoso. Ahora inicia sesión.');
+        window.location = '/login.html';
+      } else {
+        alert('Error en el registro. Puede que el DNI o email ya existan.');
+      }
+    });
+  </script>
+</body>
+</html>
